@@ -1,0 +1,61 @@
+services:
+  redis:
+    image: redis:7.4.1-alpine
+    command: ["redis-server", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+  api1:
+    build: .
+    environment:
+      INSTANCE_ID: api1
+    ports:
+      - "8091:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["python3", "app.py"]
+  api2:
+    build: .
+    environment:
+      INSTANCE_ID: api2
+    ports:
+      - "8092:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["python3", "app.py"]
+  api3:
+    build: .
+    environment:
+      INSTANCE_ID: api3
+    ports:
+      - "8093:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["python3", "app.py"]
+  test:
+    build: .
+    environment:
+      API1: http://api1:8080
+      API2: http://api2:8080
+      API3: http://api3:8080
+    depends_on:
+      - api1
+      - api2
+      - api3
+    command: ["python3", "-m", "unittest", "discover", "-s", "tests", "-v"]
+  loadgen:
+    build: .
+    environment:
+      API1: http://api1:8080
+      API2: http://api2:8080
+      API3: http://api3:8080
+    depends_on:
+      - api1
+      - api2
+      - api3
+    command: ["python3", "tools/load.py"]
