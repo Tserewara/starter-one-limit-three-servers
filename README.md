@@ -12,4 +12,4 @@ You need Docker with Compose. `make up` starts the three instances on ports 8091
 
 ## API
 
-`GET /v1/quotes` takes an `X-Api-Key` header and returns a small quote. Over the local limit it answers HTTP 429 with a JSON body and a `Retry-After` header. `GET /health` reports the instance name.
+`GET /v1/quotes` takes an `X-Api-Key` header and returns a small quote. Over the local limit it answers HTTP 429 with a JSON body. `GET /health` reports the instance name.

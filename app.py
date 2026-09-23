@@ -19,10 +19,9 @@ def local_admission(api_key):
         while recent and recent[0] <= now - WINDOW_SECONDS:
             recent.popleft()
         if len(recent) >= LIMIT:
-            retry_after = max(1, int(recent[0] + WINDOW_SECONDS - now + 0.999))
-            return False, retry_after
+            return False
         recent.append(now)
-        return True, 0
+        return True
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -47,9 +46,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(404, {"error": "not_found"})
             return
         api_key = self.headers.get("X-Api-Key", "demo-key")
-        admitted, retry_after = local_admission(api_key)
-        if not admitted:
-            self.send_json(429, {"error": "rate_limited", "instance": INSTANCE_ID}, {"Retry-After": retry_after})
+        if not local_admission(api_key):
+            self.send_json(429, {"error": "rate_limited", "instance": INSTANCE_ID})
             return
         self.send_json(200, {"quote": "available", "instance": INSTANCE_ID})
 
