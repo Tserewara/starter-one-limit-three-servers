@@ -1,21 +1,15 @@
 # The quota that multiplied
 
-This is the ParcelMint quotes API used in the exercise. It runs three separate Python API containers beside a Redis container. Each instance starts with the behavior the team originally deployed.
+This is ParcelMint's quotes API as the team deployed it: three Python API containers next to a Redis container. Each instance counts requests in its own memory.
 
 ## Run it
 
-You need Docker with Compose. Start all three instances with:
+You need Docker with Compose. `make up` starts the three instances on ports 8091, 8092 and 8093, and `curl http://localhost:8091/health` tells you which one answered. `make test` runs the given checks in a container, and `make down` removes the stack.
 
-```sh
-make up
-```
+## Try the traffic
 
-The instances are available at ports 8091, 8092, and 8093. Check one with `curl http://localhost:8091/health`. `make test` runs the given checks in a container, and `make down` removes the stack.
-
-## Try the traffic shape
-
-`make load` sends 30 requests with one API key, round-robin across all three instance URLs, and prints admitted requests, rejected requests, and the ten-second window. This is the same shape used to check the public quota.
+`make load` sends 30 requests with one API key, round-robin across the three instances, and prints one line with the requests, how many were admitted and rejected, the limit and the window. It's the same traffic the quota is checked against.
 
 ## API
 
-`GET /v1/quotes` accepts an `X-Api-Key` header and returns a small quote response. Requests over the local limit return JSON with HTTP 429 and a `Retry-After` header. `GET /health` reports the instance name.
+`GET /v1/quotes` takes an `X-Api-Key` header and returns a small quote. Over the local limit it answers HTTP 429 with a JSON body and a `Retry-After` header. `GET /health` reports the instance name.
