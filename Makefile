@@ -1,15 +1,25 @@
-.PHONY: up down test load
+COMPOSE = docker compose -f harness/compose.yaml
+.PHONY: up down contract load burst retry
 
-export COMPOSE_PROJECT_NAME=three_servers
-
+# Three instances on 8091, 8092 and 8093, and Redis.
 up:
-	docker compose up -d --build redis api1 api2 api3
+	$(COMPOSE) up -d --build --wait redis api1 api2 api3
 
 down:
-	docker compose down -v --remove-orphans
+	$(COMPOSE) down -v --remove-orphans
 
-test:
-	docker compose run --rm --build test
+# What the API already does, black-box. Passes before and after your change.
+contract:
+	$(COMPOSE) run --rm --build contract
 
+# 30 requests for one key, one at a time, round-robin across the three.
 load:
-	docker compose run --rm --build loadgen
+	$(COMPOSE) run --rm --build tools python3 load.py
+
+# 60 requests for one key at the same moment, 20 to each instance.
+burst:
+	$(COMPOSE) run --rm --build tools python3 burst.py
+
+# Fill a key, read the 429's Retry-After, wait that long, try again.
+retry:
+	$(COMPOSE) run --rm --build tools python3 retry.py

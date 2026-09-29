@@ -1,0 +1,47 @@
+# Three instances of the quotes API, as deployed, and the Redis they can
+# share. The harness talks to each instance over HTTP.
+name: three_servers
+
+x-api: &api
+  build: ../service
+  environment: &api-env
+    REDIS_URL: redis://redis:6379/0
+  depends_on:
+    redis:
+      condition: service_healthy
+
+services:
+  redis:
+    image: redis:7.4.1-alpine
+    command: ["redis-server", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api1:
+    <<: *api
+    environment: {<<: *api-env, INSTANCE_ID: api1}
+    ports: ["8091:8080"]
+  api2:
+    <<: *api
+    environment: {<<: *api-env, INSTANCE_ID: api2}
+    ports: ["8092:8080"]
+  api3:
+    <<: *api
+    environment: {<<: *api-env, INSTANCE_ID: api3}
+    ports: ["8093:8080"]
+
+  tools:
+    build: {context: ., dockerfile: tools.Dockerfile}
+    profiles: ["tools"]
+    environment: &bases
+      API1: http://api1:8080
+      API2: http://api2:8080
+      API3: http://api3:8080
+
+  contract:
+    build: ../contract
+    profiles: ["tools"]
+    environment: *bases

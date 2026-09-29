@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: ParcelMint quotes
+  version: 1.0.0
+  description: >
+    The quotes API as the starter ships it. A port listens on port 8080
+    inside its container, reads INSTANCE_ID and REDIS_URL, and answers these
+    routes. Each key gets 10 requests per 10-second window.
+paths:
+  /health:
+    get:
+      responses:
+        "200":
+          description: The instance is up.
+          content:
+            application/json:
+              schema: {type: object, required: [status, instance], properties: {status: {type: string}, instance: {type: string}}}
+  /v1/quotes:
+    get:
+      parameters:
+        - {name: X-Api-Key, in: header, schema: {type: string}}
+      responses:
+        "200":
+          description: A quote.
+          content:
+            application/json:
+              schema: {type: object, required: [quote, instance], properties: {quote: {type: string}, instance: {type: string}}}
+        "429":
+          description: The key is over its limit.
+          content:
+            application/json:
+              schema: {type: object, required: [error], properties: {error: {type: string, enum: [rate_limited]}}}
